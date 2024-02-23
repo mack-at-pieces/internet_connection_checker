@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:internet_connection_checker_2/internet_connection_checker.dart';
+
 
 Future<void> main() async {
   // Check internet connection with singleton (no custom values allowed)
