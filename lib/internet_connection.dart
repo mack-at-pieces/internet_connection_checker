@@ -83,8 +83,7 @@ class InternetConnectionChecker {
   /// | 8.8.4.4        | Google     | https://developers.google.com/speed/public-dns/ |
   /// | 208.67.222.222 | OpenDNS    | https://use.opendns.com/                        |
   /// | 208.67.220.220 | OpenDNS    | https://use.opendns.com/                        |
-  static final List<AddressCheckOptions> DEFAULT_ADDRESSES =
-      List<AddressCheckOptions>.unmodifiable(
+  static final List<AddressCheckOptions> DEFAULT_ADDRESSES = List<AddressCheckOptions>.unmodifiable(
     <AddressCheckOptions>[
       AddressCheckOptions(
         address: InternetAddress(
@@ -146,8 +145,7 @@ class InternetConnectionChecker {
     _maybeEmitStatusUpdate();
   }
 
-  static final InternetConnectionChecker _instance =
-      InternetConnectionChecker.createInstance();
+  static final InternetConnectionChecker _instance = InternetConnectionChecker.createInstance();
 
   /// Ping a single address. See [AddressCheckOptions] for
   /// info on the accepted argument.
@@ -177,7 +175,7 @@ class InternetConnectionChecker {
     }
   }
 
-  /// Initiates a request to each address in [addresses].
+  /// Attempts to connect to each address in [addresses].
   /// If at least one of the addresses is reachable
   /// we assume an internet connection is available and return `true`.
   /// `false` otherwise.
@@ -186,19 +184,23 @@ class InternetConnectionChecker {
     int length = addresses.length;
 
     for (final AddressCheckOptions addressOptions in addresses) {
-      // ignore: unawaited_futures
-      isHostReachable(addressOptions).then(
-        (AddressCheckResult request) {
-          length -= 1;
-          if (!result.isCompleted) {
-            if (request.isSuccess) {
-              result.complete(true);
-            } else if (length == 0) {
-              result.complete(false);
-            }
-          }
-        },
-      );
+      if (result.isCompleted) break;
+      final AddressCheckResult request = await isHostReachable(addressOptions);
+
+      /// Decrement the length each time to know when on the last iteration
+      length -= 1;
+      if (request.isSuccess) {
+        /// If the request is a success, instantly resolve the completer and break out of the loop
+        /// since we'll assume the client has internet.
+        result.complete(true);
+        break;
+      } else if (length == 0) {
+        /// Otherwise if the result is false, and it's on the last iteration,
+        /// we'll assume none of the addressees were a success and the client has no internet.
+        ///
+        /// Don't need to break out of the loop here since it's already the last iteration.
+        result.complete(false);
+      }
     }
 
     return result.future;
@@ -207,12 +209,10 @@ class InternetConnectionChecker {
   /// Initiates a request to each address in [addresses].
   /// If at least one of the addresses is reachable
   /// we assume an internet connection is available and return
-  /// [InternetConnectionStatus.connected].
-  /// [InternetConnectionStatus.disconnected] otherwise.
-  Future<InternetConnectionStatus> get connectionStatus async {
-    return await hasConnection
-        ? InternetConnectionStatus.connected
-        : InternetConnectionStatus.disconnected;
+  /// [InternetConnectionStatusEnum.connected].
+  /// [InternetConnectionStatusEnum.disconnected] otherwise.
+  Future<InternetConnectionStatusEnum> get connectionStatus async {
+    return await hasConnection ? InternetConnectionStatusEnum.connected : InternetConnectionStatusEnum.disconnected;
   }
 
   /// The interval between periodic checks. Periodic checks are
@@ -241,7 +241,7 @@ class InternetConnectionChecker {
     _timerHandle?.cancel();
     timer?.cancel();
 
-    final InternetConnectionStatus currentStatus = await connectionStatus;
+    final InternetConnectionStatusEnum currentStatus = await connectionStatus;
 
     // only send status update if last status differs from current
     // and if someone is actually listening
@@ -259,16 +259,16 @@ class InternetConnectionChecker {
 
   // _lastStatus should only be set by _maybeEmitStatusUpdate()
   // and the _statusController's.onCancel event handler
-  InternetConnectionStatus? _lastStatus;
+  InternetConnectionStatusEnum? _lastStatus;
   Timer? _timerHandle;
 
   // controller for the exposed 'onStatusChange' Stream
-  final StreamController<InternetConnectionStatus> _statusController =
-      StreamController<InternetConnectionStatus>.broadcast();
+  final StreamController<InternetConnectionStatusEnum> _statusController =
+      StreamController<InternetConnectionStatusEnum>.broadcast();
 
   /// Subscribe to this stream to receive events whenever the
-  /// [InternetConnectionStatus] changes. When a listener is attached
-  /// a check is performed immediately and the status ([InternetConnectionStatus])
+  /// [InternetConnectionStatusEnum] changes. When a listener is attached
+  /// a check is performed immediately and the status ([InternetConnectionStatusEnum])
   /// is emitted. After that a timer starts which performs
   /// checks with the specified interval - [checkInterval].
   /// Default is [DEFAULT_INTERVAL].
@@ -281,10 +281,10 @@ class InternetConnectionChecker {
   /// ```dart
   /// var listener = InternetConnectionChecker().onStatusChange.listen((status) {
   ///   switch(status) {
-  ///     case InternetConnectionStatus.connected:
+  ///     case InternetConnectionStatusEnum.connected:
   ///       print('Data connection is available.');
   ///       break;
-  ///     case InternetConnectionStatus.disconnected:
+  ///     case InternetConnectionStatusEnum.disconnected:
   ///       print('You are disconnected from the internet.');
   ///       break;
   ///   }
@@ -319,8 +319,7 @@ class InternetConnectionChecker {
   ///
   /// When all the listeners are removed from `onStatusChange`, the internal
   /// timer is cancelled and the stream does not emit events.
-  Stream<InternetConnectionStatus> get onStatusChange =>
-      _statusController.stream;
+  Stream<InternetConnectionStatusEnum> get onStatusChange => _statusController.stream;
 
   /// Returns true if there are any listeners attached to [onStatusChange]
   bool get hasListeners => _statusController.hasListener;

@@ -214,8 +214,8 @@ main() async {
 
   // We can also get an enum value instead of a bool
   print("Current status: ${await InternetConnectionChecker().connectionStatus}");
-  // prints either InternetConnectionStatus.connected
-  // or InternetConnectionStatus.disconnected
+  // prints either InternetConnectionStatusEnum.connected
+  // or InternetConnectionStatusEnum.disconnected
 
   // This returns the last results from the last call
   // to either hasConnection or connectionStatus
@@ -227,10 +227,10 @@ main() async {
   // until listener.cancel() is called
   var listener = InternetConnectionChecker().onStatusChange.listen((status) {
     switch (status) {
-      case InternetConnectionStatus.connected:
+      case InternetConnectionStatusEnum.connected:
         print('Data connection is available.');
         break;
-      case InternetConnectionStatus.disconnected:
+      case InternetConnectionStatusEnum.disconnected:
         print('You are disconnected from the internet.');
         break;
     }

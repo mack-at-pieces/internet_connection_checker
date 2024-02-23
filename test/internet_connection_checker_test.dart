@@ -5,8 +5,8 @@ import 'package:test/test.dart';
 
 void main() {
   group('internet_connection_checker', () {
-    StreamSubscription<InternetConnectionStatus>? listener1;
-    StreamSubscription<InternetConnectionStatus>? listener2;
+    StreamSubscription<InternetConnectionStatusEnum>? listener1;
+    StreamSubscription<InternetConnectionStatusEnum>? listener2;
 
     tearDown(() {
       // destroy any active listener after each test
@@ -40,7 +40,7 @@ void main() {
         '''should return a Future<InternetConnectionStatus>''', () {
       expect(
         InternetConnectionChecker().connectionStatus,
-        isA<Future<InternetConnectionStatus>>(),
+        isA<Future<InternetConnectionStatusEnum>>(),
       );
     });
 
@@ -49,7 +49,7 @@ void main() {
         '''should return a Future<InternetConnectionStatus>''', () async {
       expect(
         await InternetConnectionChecker().connectionStatus,
-        isA<InternetConnectionStatus>(),
+        isA<InternetConnectionStatusEnum>(),
       );
     });
 

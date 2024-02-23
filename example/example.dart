@@ -35,19 +35,19 @@ Future<void> execute(
   print(
     'Current status: ${await InternetConnectionChecker().connectionStatus}',
   );
-  // Prints either InternetConnectionStatus.connected
-  // or InternetConnectionStatus.disconnected
+  // Prints either InternetConnectionStatusEnum.connected
+  // or InternetConnectionStatusEnum.disconnected
 
   // actively listen for status updates
-  final StreamSubscription<InternetConnectionStatus> listener =
+  final StreamSubscription<InternetConnectionStatusEnum> listener =
       InternetConnectionChecker().onStatusChange.listen(
-    (InternetConnectionStatus status) {
+    (InternetConnectionStatusEnum status) {
       switch (status) {
-        case InternetConnectionStatus.connected:
+        case InternetConnectionStatusEnum.connected:
           // ignore: avoid_print
           print('Data connection is available.');
           break;
-        case InternetConnectionStatus.disconnected:
+        case InternetConnectionStatusEnum.disconnected:
           // ignore: avoid_print
           print('You are disconnected from the internet.');
           break;
